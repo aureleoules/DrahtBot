@@ -8,4 +8,6 @@ pub enum DrahtBotError {
     InvalidRepositorySlug(String),
     #[error("IO Error: {0}")]
     IOError(#[from] std::io::Error),
+    #[error("GitHub Error {0}")]
+    GitHubError(#[from] octocrab::Error),
 }
