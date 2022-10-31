@@ -571,6 +571,8 @@ dependencies = [
  "actix-web",
  "async-trait",
  "clap",
+ "futures-util",
+ "lazy_static",
  "octocrab",
  "serde_json",
  "strum",

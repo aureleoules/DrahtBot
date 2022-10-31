@@ -3,6 +3,7 @@ mod features;
 
 use std::str::FromStr;
 
+use crate::features::summary_comment::SummaryCommentFeature;
 use actix_web::{get, post, web, App, HttpRequest, HttpServer, Responder};
 use clap::Parser;
 use features::Feature;
@@ -23,6 +24,8 @@ struct Args {
         default_value = "bitcoin/bitcoin"
     )]
     repos: Vec<String>,
+    #[arg(short, long, help = "Bot username", default_value = "Drahtbot")]
+    bot_username: String,
     #[arg(long, help = "Host to listen on", default_value = "0.0.0.0")]
     host: String,
     #[arg(long, help = "Port to listen on", default_value = "1337")]
@@ -57,6 +60,7 @@ async fn index() -> &'static str {
 #[derive(Debug, Clone)]
 pub struct Context {
     octocrab: Octocrab,
+    bot_username: String,
 }
 
 #[post("/postreceive")]
@@ -79,7 +83,7 @@ async fn postreceive_handler(
 }
 
 fn features() -> Vec<Box<dyn Feature>> {
-    vec![]
+    vec![Box::new(SummaryCommentFeature::new())]
 }
 
 async fn emit_event(
@@ -136,11 +140,18 @@ async fn main() -> Result<()> {
         println!("   {}", feature.meta().description());
     }
 
-    let context = Context { octocrab };
+    println!("");
+
+    println!("Running as {}...", args.bot_username);
+
+    let context = Context {
+        octocrab,
+        bot_username: args.bot_username,
+    };
 
     HttpServer::new(move || {
         App::new()
-            .app_data(context.clone())
+            .app_data(web::Data::new(context.clone()))
             .service(index)
             .service(postreceive_handler)
     })
